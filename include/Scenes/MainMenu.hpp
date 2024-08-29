@@ -1,7 +1,7 @@
 #ifndef MAINMENU_H
 #define MAINMENU_H
 
-#include "../Engine/GameEngine.hpp"
+#include "Engine/GameEngine.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 
@@ -14,6 +14,7 @@ private:
     std::vector<sf::Text> texts;
 
     sf::Text playButton;
+    sf::Text exitButton;
 
 public:
     MainMenu(GameDataRef data);

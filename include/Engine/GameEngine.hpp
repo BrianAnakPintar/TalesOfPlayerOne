@@ -1,9 +1,9 @@
 #ifndef GAME_ENGINE_H
 #define GAME_ENGINE_H
 
-#include "AssetManager.hpp"
-#include "InputManager.hpp"
-#include "StateMachine.hpp"
+#include "AssetManager/AssetManager.hpp"
+#include "InputManager/InputManager.hpp"
+#include "StateMachine/StateMachine.hpp"
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <memory>
@@ -25,7 +25,7 @@ private:
     void Run();
 
 public:
-    static const int WIDTH = 1000;
+    static const int WIDTH = 1360;
     static const int HEIGHT = 720;
     GameEngine(int width, int height, const std::string& title);
 };

@@ -1,5 +1,5 @@
 #include "Scenes/MainMenu.hpp"
-#include "SFML/Graphics/Text.hpp"
+#include "Scenes/Tetris/Tetris.hpp"
 #include <iostream>
 
 MainMenu::MainMenu(GameDataRef data): data(data) {
@@ -25,7 +25,7 @@ void MainMenu::Init() {
     game_title.setCharacterSize(48);
     game_title.setFillColor(sf::Color::Black);
     game_title.setPosition(((float) GameEngine::WIDTH/2) - (game_title.getGlobalBounds().width/2),
-                           ((float) GameEngine::HEIGHT/5) - (game_title.getGlobalBounds().height/5));
+                           ((float) GameEngine::HEIGHT/4) - (game_title.getGlobalBounds().height/5));
     this->texts.emplace_back(std::move(game_title));
 
     // Background
@@ -49,6 +49,13 @@ void MainMenu::Init() {
     this->playButton.setPosition(((float) GameEngine::WIDTH/2) - (playButton.getGlobalBounds().width/2),
                                  ((float) GameEngine::HEIGHT/3) - (playButton.getGlobalBounds().height/3));
 
+    this->exitButton.setFont(this->data->assetManager.GetFont("thaleah"));
+    this->exitButton.setString("Exit");
+    this->exitButton.setCharacterSize(48);
+    this->exitButton.setFillColor(sf::Color::Black);
+    this->exitButton.setPosition(((float) GameEngine::WIDTH/2) - (playButton.getGlobalBounds().width/2),
+                                 ((float) 2*GameEngine::HEIGHT/5) - (2*playButton.getGlobalBounds().height/5));
+
 }
 
 void MainMenu::HandleInput() {
@@ -56,12 +63,15 @@ void MainMenu::HandleInput() {
     while (this->data->window.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
             this->data->window.close();
-        } 
+        }
 
         if (this->data->inputManager.isTextClicked(this->playButton, sf::Mouse::Left, this->data->window)) {
             std::cout << "Heading to game screen" << std::endl;
+            this->data->stateMachine.AddState(StateRef(new Tetris(this->data)), true);
         }
+
     }
+    
 }
 
 void MainMenu::Update(float dt) {
@@ -69,7 +79,7 @@ void MainMenu::Update(float dt) {
 }
 
 void MainMenu::Draw(float dt) {
-    this->data->window.clear(sf::Color::White);
+    this->data->window.clear(sf::Color::Black);
 
     for (sf::Sprite sprite : this->sprites) {
         this->data->window.draw(sprite);
@@ -78,7 +88,7 @@ void MainMenu::Draw(float dt) {
         this->data->window.draw(text);
     }
     this->data->window.draw(playButton);
-
+    this->data->window.draw(exitButton);
     this->data->window.display();
 }
 

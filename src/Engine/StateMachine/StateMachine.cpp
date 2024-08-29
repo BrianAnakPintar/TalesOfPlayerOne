@@ -1,4 +1,4 @@
-#include "Engine/StateMachine.hpp"
+#include "Engine/StateMachine/StateMachine.hpp"
 
 void StateMachine::AddState(StateRef newState, bool isReplacing) {
     this->isAdding = true;

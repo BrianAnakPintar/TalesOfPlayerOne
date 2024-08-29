@@ -1,4 +1,4 @@
-#include "Engine/AssetManager.hpp"
+#include "Engine/AssetManager/AssetManager.hpp"
 
 void AssetManager::LoadTexture(const std::string& name, const std::string& fileName) {
     sf::Texture texture;    

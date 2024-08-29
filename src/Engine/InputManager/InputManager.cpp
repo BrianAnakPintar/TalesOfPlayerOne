@@ -1,4 +1,4 @@
-#include "Engine/InputManager.hpp"
+#include "Engine/InputManager/InputManager.hpp"
 
 bool InputManager::isSpriteClicked(sf::Sprite object, sf::Mouse::Button button, sf::RenderWindow& window) {
     if (sf::Mouse::isButtonPressed(button)) {
