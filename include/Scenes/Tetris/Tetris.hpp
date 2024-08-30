@@ -6,17 +6,10 @@
 #include <vector>
 #include "block.hpp"
 #include <queue>
+#include "SFML/System/Vector2.hpp"
+#include "SFML/Window/Keyboard.hpp"
+#include "Scenes/Tetris/TetrisBlocks.hpp"
 
-enum Types {
-    Empty,
-    I_Shape,
-    J_Shape,
-    L_Shape,
-    O_Shape,
-    S_Shape,
-    T_Shape,
-    Z_Shape
-};
 
 class Tetris : public State {
 private:
@@ -32,7 +25,7 @@ private:
     static constexpr float offsetY = ((float) GameEngine::HEIGHT - GRID_HEIGHT) / 2;
 
     std::queue<Block> blockQueue;
-    Block currentBlock;
+    Block *currentBlock;
     Types grid[HEIGHT][WIDTH];              // Different types represent different colors.
 
     GameDataRef data;

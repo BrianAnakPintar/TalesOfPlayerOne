@@ -1,5 +1,4 @@
 #include "Scenes/Tetris/Tetris.hpp"
-#include "SFML/Window/Keyboard.hpp"
 
 Tetris::Tetris(GameDataRef data) : data(data) {
     this->name = "Tetris Game!";
@@ -27,6 +26,8 @@ void Tetris::Init() {
     score.setString("Score: 0");
     score.setFillColor(sf::Color::Cyan);
     texts.push_back(score);
+
+    this->currentBlock = new JBlock();
 }
 
 void Tetris::HandleInput() {
@@ -38,12 +39,16 @@ void Tetris::HandleInput() {
         if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::H) {
                 // Move left.
+                this->currentBlock->move(-1, 0);
             } else if (event.key.code == sf::Keyboard::J) {
                 // Soft Drop.
+                this->currentBlock->move(0, 1);
             } else if (event.key.code == sf::Keyboard::K) {
                 // Rotate.
+                this->currentBlock->rotate();
             } else if (event.key.code == sf::Keyboard::L) {
                 // Move right
+                this->currentBlock->move(1, 0);
             }
         }
     }
@@ -55,6 +60,7 @@ void Tetris::Update(float dt) {
 
 void Tetris::Draw(float dt) {
     data->window.clear();
+    // Renders the grid and filled block.
     for (int y = 2; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             if (grid[y][x] != Types::Empty) {
@@ -68,6 +74,15 @@ void Tetris::Draw(float dt) {
             }
         }
     }
+
+    // Renders the current falling block.
+    std::vector<sf::Vector2u> block = this->currentBlock->getGrid();
+    for (sf::Vector2u vec : block) {
+        blockSprite.setColor(sf::Color::Blue);
+        blockSprite.setPosition(offsetX + vec.x * BLOCK_SIZE, offsetY + vec.y  * BLOCK_SIZE);
+        this->data->window.draw(blockSprite);
+    }
+    
     data->window.display();
 }
 
