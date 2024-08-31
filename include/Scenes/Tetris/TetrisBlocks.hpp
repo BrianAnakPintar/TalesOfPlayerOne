@@ -1,7 +1,6 @@
 #ifndef TETRISBLOCK_H
 #define TETRISBLOCK_H
 #include "block.hpp"
-#include <iostream>
 
 class LBlock : public Block {
 public:
@@ -10,9 +9,9 @@ public:
         this->rotationState = 0;
 
         this->grids[0] = {sf::Vector2u(0, 1), sf::Vector2u(1, 1), sf::Vector2u(2, 1), sf::Vector2u(2, 0)};
-        this->grids[1] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(0, 2)};
+        this->grids[1] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(2, 2)};
         this->grids[2] = {sf::Vector2u(0, 1), sf::Vector2u(1, 1), sf::Vector2u(2, 1), sf::Vector2u(0, 2)};
-        this->grids[3] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(2, 0)};
+        this->grids[3] = {sf::Vector2u(0, 0), sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2)};
     }
 };
 
@@ -32,14 +31,13 @@ public:
 class JBlock : public Block {
 public:
     JBlock() {
-        std::cout << "J BLOCK" << std::endl;
         this->blockType = Types::J_Shape;
         this->rotationState = 0;
 
         this->grids[0] = {sf::Vector2u(0, 0), sf::Vector2u(0, 1), sf::Vector2u(1, 1), sf::Vector2u(2, 1)};
-        this->grids[1] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(0, 2)};
+        this->grids[1] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(2, 0)};
         this->grids[2] = {sf::Vector2u(0, 1), sf::Vector2u(1, 1), sf::Vector2u(2, 1), sf::Vector2u(2, 2)};
-        this->grids[3] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(2, 0)};
+        this->grids[3] = {sf::Vector2u(1, 0), sf::Vector2u(1, 1), sf::Vector2u(1, 2), sf::Vector2u(0, 2)};
     }
 };
 

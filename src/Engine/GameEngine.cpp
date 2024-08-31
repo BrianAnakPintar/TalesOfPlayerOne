@@ -2,7 +2,7 @@
 #include "Scenes/MainMenu.hpp"
 
 GameEngine::GameEngine(int width, int height, const std::string& title) {
-    this->data->window.create(sf::VideoMode(width, height), title, sf::Style::Close | sf::Style::Titlebar);
+    this->data->window.create(sf::VideoMode(width, height), title);
     this->data->stateMachine.AddState(StateRef(new MainMenu(this->data)));
     this->Run();
 }

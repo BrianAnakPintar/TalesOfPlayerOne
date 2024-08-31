@@ -32,3 +32,7 @@ void Block::move(int x, int y) {
     this->offset.x += x;
     this->offset.y += y;
 }
+
+Types Block::getType() {
+    return this->blockType;
+}

@@ -22,15 +22,16 @@ protected:
     int rotationState;
     sf::Vector2u offset;
 
-
 public:
     Block();
     void rotate();
     void rotate_counter();
     void move(int x, int y);
     void Draw();
+    // This returns the grid added with an offset.
     std::vector<sf::Vector2u> getGrid();
     void setOffset(int x, int y);
+    Types getType();
 };
 
 #endif // !BLOCK_H

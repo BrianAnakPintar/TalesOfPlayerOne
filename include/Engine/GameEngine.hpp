@@ -25,8 +25,8 @@ private:
     void Run();
 
 public:
-    static const int WIDTH = 1360;
-    static const int HEIGHT = 720;
+    static constexpr float WIDTH = 768 * 1.25;
+    static constexpr float HEIGHT = 560 * 1.25;
     GameEngine(int width, int height, const std::string& title);
 };
 
