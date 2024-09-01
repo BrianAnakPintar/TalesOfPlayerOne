@@ -43,14 +43,15 @@ this->data->stateMachine.AddState(StateRef(new SceneName(this->data)))
 ```
 ## Screenshots
 
-![game screenshot](Docs/gameplay.gif)
-![menu](Docs/menu.png)
-![gameover](Docs/gameover.png)
+<img src="Docs/gameplay.gif" alt="game screenshot" width="400" height="300">
+<img src="Docs/menu.png" alt="menu" width="400" height="300">
+<img src="Docs/gameover.png" alt="gameover" width="400" height="300">
 
 
 ## Acknowledgements
 The project and engine relies on SFML a lot to draw windows and handle the game loop. THEY ARE AMAZING.
  - [SFML](https://www.sfml-dev.org/)
  - [Sprites & UI Elements](https://humblepixel.itch.io/pocket-inventory-series-5-player-status/devlog/781331/player-status-v10-inventory-book)
+
 Some resources I found helpful:
  - [Making Tic-Tac-Toe with SFML](https://www.youtube.com/watch?v=JxKyUwpBmy4) (I liked the simplicity of his Engine)
