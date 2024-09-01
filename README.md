@@ -1,6 +1,6 @@
 # Tales of Player One.
 
-| A collection of minigames meant to test and improve my game engine.
+> A collection of minigames meant to test and improve my game engine.
 
 
 ## Overview
