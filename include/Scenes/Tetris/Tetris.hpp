@@ -29,11 +29,14 @@ private:
     static constexpr int GRID_WIDTH = WIDTH * BLOCK_SIZE;
     static constexpr int GRID_HEIGHT = (HEIGHT - 2) * BLOCK_SIZE; // Subtract 2 for the extra rows added at the top.
     
-    static constexpr float offsetX = ((float) GameEngine::WIDTH - GRID_WIDTH) / 4;
+    static constexpr float offsetX = ((float) GameEngine::WIDTH - GRID_WIDTH) / 6;
     static constexpr float offsetY = ((float) GameEngine::HEIGHT - GRID_HEIGHT) / 3;
+
+    static constexpr float ROW_CLEAR = 100;
 
     std::queue<Block*> blockQueue;
     Block *currentBlock;
+    Block *heldBlock;
     Types grid[HEIGHT][WIDTH];              // Different types represent different colors.
 
     GameDataRef data;
@@ -42,10 +45,15 @@ private:
     sf::Sprite background;
     std::map<Types, sf::Sprite> blockSprites;
     std::vector<sf::Sprite> sprites;
+    sf::Text scoreText;
     std::vector<sf::Text> texts;
 
     static constexpr float FALL_TIME = 1.25;
     float elapsedTime;
+    float cooldownTime;
+    bool startLockTimer;
+    bool gameEnd;
+    float score;
 
     bool isWithinBounds();
     bool isValidTile(sf::Vector2u pos);
@@ -55,8 +63,12 @@ private:
     void MoveRight();
     void Rotate();
     void LockCurrentBlock();
+    Block* GetRandomBlock();
     void GetNextBlock();
-    void CheckRowClear(int row); 
+    bool CheckRowClear(int row); 
+    void DrawGhostBlock();
+    void HardDrop();
+    void HoldBlock();
 };
 
 #endif

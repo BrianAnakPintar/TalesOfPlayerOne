@@ -1,10 +1,12 @@
 #include "Scenes/Tetris/Tetris.hpp"
 #include "SFML/Graphics/Color.hpp"
+#include "SFML/Graphics/Text.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "Scenes/Tetris/TetrisBlocks.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "Scenes/Tetris/block.hpp"
 #include <cstdlib>
+#include <string>
 
 Tetris::Tetris(GameDataRef data) : data(data) {
     this->name = "Tetris Game!";
@@ -24,12 +26,6 @@ void Tetris::Init() {
 
     float scaleFactor = static_cast<float>(BLOCK_SIZE) / this->blockSprite.getTexture()->getSize().x;
     this->blockSprite.setScale(scaleFactor, scaleFactor);
-
-    sf::Text score;
-    score.setFont(this->data->assetManager.GetFont("thaleah"));
-    score.setString("Score: 0");
-    score.setFillColor(sf::Color::Cyan);
-    texts.push_back(score);
     
     // Create a new sprite for every blocks.
     sf::Sprite zBlock = this->blockSprite;
@@ -60,7 +56,6 @@ void Tetris::Init() {
     oBlock.setColor(sf::Color::Yellow);
     this->blockSprites[Types::O_Shape] = oBlock;
 
-
     this->data->assetManager.LoadTexture("bg", ResourceDir + "/texture/table_background.png");
     this->background.setTexture(this->data->assetManager.GetTexture("bg"));
     sf::Vector2u windowSize = this->data->window.getSize();
@@ -69,21 +64,50 @@ void Tetris::Init() {
     float scaleY = static_cast<float>(windowSize.y) / bgSize.y;
     this->background.setScale(scaleX, scaleY);
 
+    // Load the texture for the book pages
     sf::Sprite book;
     this->data->assetManager.LoadTexture("book", ResourceDir + "/texture/book_page.png");
     book.setTexture(this->data->assetManager.GetTexture("book"));
-    book.setScale(2, 2);
-    book.setPosition(((float) GameEngine::WIDTH/4) - (book.getGlobalBounds().width/4),
-                    ((float) GameEngine::HEIGHT/2) - (book.getGlobalBounds().height/2));
-    this->sprites.emplace_back(std::move(book));
+    book.setScale(2.1, 2.1);
 
+    // Load the second page (book2)
     sf::Sprite book2;
-    book.setTexture(this->data->assetManager.GetTexture("book"));
-    book.setScale(2, 2);
-    book.setPosition(((float) 3.45*GameEngine::WIDTH/4) - (3.45*book.getGlobalBounds().width/4),
-                    ((float) GameEngine::HEIGHT/2) - (book.getGlobalBounds().height/2));
+    book2.setTexture(this->data->assetManager.GetTexture("book"));
+    book2.setScale(2.1, 2.1);
+
+    // Calculate the combined width of both pages
+    float combinedWidth = book.getGlobalBounds().width + book2.getGlobalBounds().width;
+
+    // Position the first page (book) on the left side
+    book.setPosition(
+        ((float) GameEngine::WIDTH) / 2 - combinedWidth / 2,  // Centered horizontally
+        ((float) GameEngine::HEIGHT) / 2 - book.getGlobalBounds().height / 2  // Centered vertically
+    );
+
+    // Position the second page (book2) on the right side, next to the first page
+    book2.setPosition(
+        book.getPosition().x + book.getGlobalBounds().width,  // Right next to the first page
+        ((float) GameEngine::HEIGHT) / 2 - book2.getGlobalBounds().height / 2  // Centered vertically
+    );
+
+    this->scoreText.setFont(this->data->assetManager.GetFont("thaleah"));
+    this->scoreText.setPosition(book2.getPosition().x + 50, book2.getPosition().y);
+    this->scoreText.setString("Score: ");
+    this->scoreText.setCharacterSize(48);
+    this->scoreText.setFillColor(sf::Color::Black);
+
+    // Add the sprites to the list
     this->sprites.emplace_back(std::move(book));
+    this->sprites.emplace_back(std::move(book2));
     this->elapsedTime = 0;
+    this->heldBlock = nullptr;
+    this->startLockTimer = false;
+    this->cooldownTime = 0;
+    this->gameEnd = false;
+
+    this->blockQueue.push(GetRandomBlock());
+    this->blockQueue.push(GetRandomBlock());
+    this->blockQueue.push(GetRandomBlock());
     GetNextBlock();
 }
 
@@ -93,7 +117,7 @@ void Tetris::HandleInput() {
         if (event.type == sf::Event::Closed) {
             this->data->window.close();
         }
-        if (event.type == sf::Event::KeyPressed) {
+        if (!gameEnd && event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::H) {
                 MoveLeft();
             } else if (event.key.code == sf::Keyboard::J) {
@@ -102,16 +126,30 @@ void Tetris::HandleInput() {
                 Rotate();
             } else if (event.key.code == sf::Keyboard::L) {
                 MoveRight();
+            } else if (event.key.code == sf::Keyboard::Space) {
+                HardDrop();
+            } else if (event.key.code == sf::Keyboard::V) {
+                HoldBlock();
             }
         }
     }
 }
 
 void Tetris::Update(float dt) {
-    this->elapsedTime = this->elapsedTime + 0.1 + dt;
-    if (this->elapsedTime >= this->FALL_TIME) {
+    if (gameEnd)
+        return;
+    this->elapsedTime += dt;
+    if (!this->startLockTimer && this->elapsedTime >= this->FALL_TIME) {
         this->elapsedTime = 0;
         MoveDown();
+    }
+    if (this->startLockTimer) {
+        this->cooldownTime += dt;
+        if (this->cooldownTime >= this->FALL_TIME) {
+            LockCurrentBlock();
+            this->startLockTimer = false;
+            this->cooldownTime = 0;
+        }
     }
 }
 
@@ -125,6 +163,9 @@ void Tetris::Draw(float dt) {
         for (int x = 0; x < WIDTH; x++) {
             if (grid[y][x] != Types::Empty) {
                 sf::Sprite spr_block = this->blockSprites[grid[y][x]];
+                if (gameEnd) {
+                    spr_block.setColor(sf::Color(100,100,100));
+                }
                 spr_block.setPosition(offsetX + x * BLOCK_SIZE, offsetY + y * BLOCK_SIZE);
                 this->data->window.draw(spr_block);
             } else {
@@ -139,9 +180,58 @@ void Tetris::Draw(float dt) {
     std::vector<sf::Vector2u> block = this->currentBlock->getGrid();
     for (sf::Vector2u vec : block) {
         sf::Sprite spr_block = this->blockSprites[currentBlock->getType()];
+        if (gameEnd) {
+            spr_block.setColor(sf::Color(100,100,100));
+        }
         spr_block.setPosition(offsetX + vec.x * BLOCK_SIZE, offsetY + vec.y  * BLOCK_SIZE);
         this->data->window.draw(spr_block);
     }
+    DrawGhostBlock();
+
+    // Render all the blocks in the queue on the side.
+
+    float verticalOffset = 0.0f; // Initial vertical offset
+    if (!this->blockQueue.empty()) {
+        // Create a copy of the queue to preserve the original queue
+        std::queue<Block*> tempQueue = this->blockQueue;
+
+        while (!tempQueue.empty()) {
+            Block* nextBlock = tempQueue.front(); // Get the next block
+            tempQueue.pop(); // Remove it from the temporary queue
+
+            std::vector<sf::Vector2u> nextBlockGrid = nextBlock->getGrid();
+            for (sf::Vector2u vec : nextBlockGrid) {
+                sf::Sprite spr_next_block = this->blockSprites[nextBlock->getType()];
+                // Positioning next to the main grid with an additional vertical offset
+                spr_next_block.setPosition(
+                    offsetX + (WIDTH + .75) * BLOCK_SIZE + vec.x * BLOCK_SIZE,
+                    offsetY + 2 * BLOCK_SIZE + vec.y * BLOCK_SIZE + verticalOffset
+                );
+                this->data->window.draw(spr_next_block);
+            }
+
+            // Increase the vertical offset for the next block in the queue
+            verticalOffset += (4 * BLOCK_SIZE); // Adjust based on block size and desired spacing
+        }
+
+        verticalOffset = (4*BLOCK_SIZE)*4.5;
+        if (this->heldBlock != nullptr) {
+            std::vector<sf::Vector2u> blkGrid = this->heldBlock->getGrid();
+            Types type = this->heldBlock->getType();
+            for (sf::Vector2u vec : blkGrid) {
+                sf::Sprite spr_next_block = this->blockSprites[type];
+                spr_next_block.setPosition(
+                    (WIDTH + 2.75) * BLOCK_SIZE + vec.x * BLOCK_SIZE,
+                    2 * BLOCK_SIZE + vec.y * BLOCK_SIZE + verticalOffset
+                );
+                this->data->window.draw(spr_next_block);
+            }
+
+        }
+    }
+
+    this->scoreText.setString("Score: " + std::to_string((int)this->score));
+    data->window.draw(this->scoreText);
     
     data->window.display();
 }
@@ -183,7 +273,7 @@ void Tetris::MoveDown() {
     this->currentBlock->move(0, 1);
     if (!isWithinBounds()) {
         this->currentBlock->move(0, -1);
-        LockCurrentBlock();
+        this->startLockTimer = true;
     }
 }
 
@@ -201,11 +291,37 @@ void Tetris::Rotate() {
     }
 }
 
-void Tetris::CheckRowClear(int row) {
+
+void Tetris::HardDrop() {
+    int dropDistance = 0;
+    bool canDrop = true;
+
+    // Find the maximum drop distance
+    while (canDrop) {
+        for (sf::Vector2u vec : this->currentBlock->getGrid()) {
+            int newY = vec.y + dropDistance + 1; // Check the next row down
+            if (newY >= HEIGHT || grid[newY][vec.x] != Types::Empty) {
+                canDrop = false; // Block can't drop further
+                break;
+            }
+        }
+        if (canDrop) {
+            dropDistance++; // Increment drop distance
+        }
+    }
+
+    // Move the block down by the drop distance
+    this->currentBlock->move(0, dropDistance); // Assuming move(x, y) moves the block by x, y cells
+
+    // Lock the block in place
+    LockCurrentBlock();
+}
+
+bool Tetris::CheckRowClear(int row) {
     // Don't clear if row is not full.
     for (int i = 0; i < WIDTH; i++) {
         if (grid[row][i] == Types::Empty)
-            return;
+            return false;
     }
     
     // Clear the row by setting all its blocks to empty.
@@ -219,6 +335,7 @@ void Tetris::CheckRowClear(int row) {
             grid[r][i] = grid[r-1][i];
         }
     }
+    return true;
 
     // Clear the top row, as it has been "dropped" down.
     for (int i = 0; i < WIDTH; i++) {
@@ -227,46 +344,108 @@ void Tetris::CheckRowClear(int row) {
 }
 
 void Tetris::LockCurrentBlock() {
+    if (!isWithinBounds()) {
+        gameEnd = true;
+    }
     std::vector<sf::Vector2u> tiles = this->currentBlock->getGrid();
     for (sf::Vector2u tile : tiles) {
         this->grid[tile.y][tile.x] = this->currentBlock->getType();
-
-        // Check for collisions.
-        CheckRowClear(tile.y);
     }
+    int rowClears = 0;
+    for (sf::Vector2u tile : tiles) {
+        if (CheckRowClear(tile.y)) {
+            rowClears++;
+        }
+    }
+    switch (rowClears) {
+        case 1:
+            this->score += 100;
+        case 2:
+            this->score += 300;
+        case 3:
+            this->score += 500;
+        case 4:
+            this->score += 800;
+    }
+
     free(currentBlock);
     GetNextBlock();
 }
 
-void Tetris::GetNextBlock() {
+Block* Tetris::GetRandomBlock() {
     int next_block = (std::rand() % 7);
-    Block *new_block;
     switch (next_block) {
         case 0:
-            new_block = new IBlock();
-            break;
+            return new IBlock();
         case 1:
-            new_block = new JBlock();
-            break;
+            return new JBlock();
         case 2:
-            new_block = new ZBlock();
-            break;
+            return new ZBlock();
         case 3:
-            new_block = new SBlock();
-            break;
+            return new SBlock();
         case 4:
-            new_block = new LBlock();
-            break;
+            return new LBlock();
         case 5:
-            new_block = new OBlock();
-            break;
+            return new OBlock();
         case 6:
-            new_block = new TBlock();
-            break;
+            return new TBlock();
     }
+    return nullptr;
+}
 
+void Tetris::GetNextBlock() {
+    Block *new_block = GetRandomBlock(); 
     this->blockQueue.push(new_block);
     this->currentBlock = blockQueue.front();
     blockQueue.pop();
     this->currentBlock->setOffset(3, 0);
+}
+
+
+void Tetris::DrawGhostBlock() {
+    int dropDistance = 0;
+    bool canDrop = true;
+
+    // Calculate the drop distance for the ghost block
+    while (canDrop) {
+        for (sf::Vector2u vec : this->currentBlock->getGrid()) {
+            int newY = vec.y + dropDistance + 1;
+            if (newY >= HEIGHT || grid[newY][vec.x] != Types::Empty) {
+                canDrop = false;
+                break;
+            }
+        }
+        if (canDrop) {
+            dropDistance++;
+        }
+    }
+
+    // Draw the ghost block at the calculated position
+    std::vector<sf::Vector2u> block = this->currentBlock->getGrid();
+    for (sf::Vector2u vec : block) {
+        sf::Sprite spr_ghost_block = this->blockSprites[currentBlock->getType()];
+        spr_ghost_block.setPosition(offsetX + vec.x * BLOCK_SIZE, offsetY + (vec.y + dropDistance) * BLOCK_SIZE);
+        sf::Color originalColor = spr_ghost_block.getColor();
+        sf::Color transparentColor = originalColor;
+        transparentColor.a = 100; // Set alpha value for transparency (0-255)
+        spr_ghost_block.setColor(transparentColor);
+        this->data->window.draw(spr_ghost_block);
+    }
+}
+
+void Tetris::HoldBlock() {
+    if (this->heldBlock == nullptr) {
+        this->heldBlock = currentBlock;
+        this->heldBlock->setOffset(3, 0);
+        GetNextBlock();
+    } else {
+        // Swap the current block with the held block
+        Block* tmp = this->heldBlock;
+        this->heldBlock = this->currentBlock;
+        this->currentBlock = tmp;
+
+        // Reset the offset of the new current block (if needed)
+        this->currentBlock->setOffset(3, 0);
+        this->heldBlock->setOffset(3, 0);
+    }
 }
